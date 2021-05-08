@@ -25,11 +25,10 @@ public class NTLMTest {
 
     @Test
     public void test1() throws Exception {
-        //URL url = new URL("https://raw.githubusercontent.com/akashche/timestamp-server/master/README.md");
-        URL url = new URL("https://hs01.kep.tr/squirrelmail/esign/pttkep-eimza.php");
+        URL url = new URL("https://raw.githubusercontent.com/akashche/timestamp-server/master/README.md");
+        //URL url = new URL("https://hs01.kep.tr/squirrelmail/esign/pttkep-eimza.php");
         //URL url = new URL("http://127.0.0.1:" + port);
 //        URL url = new URL("https://localhost:8443/");
-        /*
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setDoInput(true);
@@ -37,7 +36,6 @@ public class NTLMTest {
         conn.connect();
         readResponse(conn);
         conn.disconnect();
-         */
 
         System.out.println("EXIT");
         Thread.sleep(10000000);
