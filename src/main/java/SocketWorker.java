@@ -3,7 +3,6 @@
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,10 +12,22 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class SocketWorker implements Runnable {
     private static final String resp1 = "HTTP/1.1 407 Proxy Authentication Required\r\n" +
             "Content-Length: 0\r\n" +
-            "Proxy-Authenticate: NTLM\r\n\r\n";
+            "Proxy-Authenticate: NEGOTIATE\r\n" +
+            "Proxy-Authenticate: NTLM\r\n" +
+            "Proxy-Authenticate: BASIC realm=\"test1\"\r\n" +
+            "Proxy-Connection: close\r\n" +
+            "Connection: close\r\n" +
+            "Content-Length: 7394\r\n" +
+            "\r\n" +
+            genRest(7394);
     private static final String resp2 = "HTTP/1.1 407 Proxy Authentication Required\r\n" +
             "Content-Length: 0\r\n" +
-            "Proxy-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n\r\n";
+            "Proxy-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n" +
+            "Proxy-Connection: Keep-Alive\r\n" +
+            "Connection: Keep-Alive\r\n" +
+            "Content-Length: 7411\r\n" +
+            "\r\n" +
+            genRest(7411);
     private static final String resp3 = "HTTP/1.1 200 Connection Established\r\n\r\n";
 
     private enum RequestType {
@@ -33,7 +44,7 @@ public class SocketWorker implements Runnable {
     @Override
     public void run() {
         try {
-            for (;;) {
+            outer: for (;;) {
                 if (null != dest) {
                     tunnel(sock, dest);
                 } else {
@@ -41,9 +52,10 @@ public class SocketWorker implements Runnable {
                     switch (detectRequestType(headers)) {
                         case CLOSED:
                             sock.close();
-                            break;
+                            break outer;
                         case NOAUTH:
                             sendResponse(sock, resp1);
+                            break outer;
                         case NTLMSPP_NEGOTIATE:
                             sendResponse(sock, resp2);
                             break;
@@ -146,21 +158,33 @@ public class SocketWorker implements Runnable {
     }
 
     private static void tunnel(Socket sock, Socket dest) throws Exception {
-        System.out.println("Tunneling");
         InputStream srcIn = sock.getInputStream();
         OutputStream srcOut = sock.getOutputStream();
         InputStream destIn = dest.getInputStream();
         OutputStream destOut = dest.getOutputStream();
+        long outbound = 0;
+        long inbound = 0;
         byte[] buf = new byte[4096];
         while (srcIn.available() > 0) {
             int read = srcIn.read(buf);
+            outbound += read;
             destOut.write(buf, 0, read);
         }
         while (destIn.available() > 0) {
             int read = destIn.read(buf);
+            inbound += read;
             srcOut.write(buf, 0, read);
         }
+        System.out.println("Tunneling, outbound bytes: [" + outbound + "], inbound bytes: [" + inbound + "]");
         Thread.sleep(1000);
+    }
+
+    private static String genRest(int length) {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < length; i++) {
+            sb.append(i % 10);
+        }
+        return sb.toString();
     }
 
 }
