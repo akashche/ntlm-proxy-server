@@ -17,17 +17,17 @@ public class SocketWorker implements Runnable {
             "Proxy-Authenticate: BASIC realm=\"test1\"\r\n" +
             "Proxy-Connection: close\r\n" +
             "Connection: close\r\n" +
-            "Content-Length: 7394\r\n" +
+            "Content-Length: 0\r\n" +
             "\r\n" +
-            genRest(7394);
+            genRest(0);
     private static final String resp2 = "HTTP/1.1 407 Proxy Authentication Required\r\n" +
             "Content-Length: 0\r\n" +
             "Proxy-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n" +
             "Proxy-Connection: Keep-Alive\r\n" +
             "Connection: Keep-Alive\r\n" +
-            "Content-Length: 7411\r\n" +
+            "Content-Length: 8192\r\n" +
             "\r\n" +
-            genRest(7411);
+            genRest(8192);
     private static final String resp3 = "HTTP/1.1 200 Connection Established\r\n\r\n";
 
     private enum RequestType {
@@ -175,7 +175,9 @@ public class SocketWorker implements Runnable {
             inbound += read;
             srcOut.write(buf, 0, read);
         }
-        System.out.println("Tunneling, outbound bytes: [" + outbound + "], inbound bytes: [" + inbound + "]");
+        if (outbound > 0 || inbound > 0) {
+            System.out.println("Tunneling, outbound bytes: [" + outbound + "], inbound bytes: [" + inbound + "]");
+        }
         Thread.sleep(1000);
     }
 
